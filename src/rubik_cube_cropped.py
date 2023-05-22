@@ -74,7 +74,7 @@ for file in image_files:
             grid_data.append((nearest_color, (left, top, right, bottom)))
 
     # 保存排序后的图片文件名和格子数据
-    sorted_image_files.append((file, grid_data, max_contour))
+    sorted_image_files.append((file, grid_data, cropped_image))
 
 # 根据中间格子的颜色顺序，展示裁剪、标记颜色后的图片
 display_order = ['white', 'blue', 'red', 'green', 'yellow', 'orange']
@@ -84,25 +84,17 @@ cv2.namedWindow('Cropped and Marked Images', cv2.WINDOW_NORMAL)
 
 # 根据中间格子的颜色顺序，遍历排序后的图片文件和格子数据，展示图片
 for color in display_order:
-    for file, grid_data, max_contour in sorted_image_files:
+    for file, grid_data, cropped_image in sorted_image_files:
         # 查找中间格子的颜色
         middle_color = grid_data[4][0]
 
         # 如果中间格子的颜色与当前遍历的颜色一致，则显示该图片
         if middle_color == color:
-            # 加载图片
-            marked_image = cv2.imread(file)
-
-            # 计算最大轮廓的边界框
-            x, y, w, h = cv2.boundingRect(max_contour)
-
-            # 创建一张与图片大小相同的空白图像
-            # marked_image = np.zeros_like(image)
 
             # 遍历格子数据，绘制方框和文本
             for grid_color, (left, top, right, bottom) in grid_data:
                 # 绘制方框
-                cv2.rectangle(marked_image, (left+x, top+y), (right+x, bottom+y), cube_colors[grid_color], 2)
+                cv2.rectangle(cropped_image, (left, top), (right, bottom), cube_colors[grid_color], 2)
 
                 # 设置文本参数
                 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -111,15 +103,21 @@ for color in display_order:
                 text_size, _ = cv2.getTextSize(grid_color, font, font_scale, font_thickness)
 
                 # 计算文本位置
-                text_x = int(left + x + (right - left) / 2 - text_size[0] / 2)
-                text_y = int(top + y + (bottom - top) / 2 + text_size[1] / 2)
+                text_x = int(left + (right - left) / 2 - text_size[0] / 2)
+                text_y = int(top + (bottom - top) / 2 + text_size[1] / 2)
 
                 # 绘制文本
-                cv2.putText(marked_image, grid_color, (text_x, text_y), font, font_scale, (0, 0, 0), font_thickness)
+                cv2.putText(cropped_image, grid_color, (text_x, text_y), font, font_scale, (0, 0, 0), font_thickness)
 
             # 显示图片
-            cv2.imshow('Cropped and Marked Images', marked_image)
+            cv2.imshow('Cropped and Marked Images', cropped_image)
             cv2.waitKey(0)
+
+            # 打印输出每个格子提取的颜色值
+            print(f"Image: {file}")
+            for i, color in enumerate(grid_data):
+                print(f"Grid {i+1}: {color}")
+            print('----------------------')
 
 # 关闭窗口
 cv2.destroyAllWindows()
