@@ -7,6 +7,9 @@ name = "pypi"
 opencv-python = "*"
 numpy = "*"
 pillow = "*"
+flask = "*"
+matplotlib = "*"
+requests = "*"
 
 [dev-packages]
 

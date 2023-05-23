@@ -12,13 +12,13 @@ cube_colors = {
 }
 
 # 加载图片
-image = cv2.imread('rubiks_cube.jpg')
+image = cv2.imread('../data/input/camera/red.jpg')
 
 # 将图片转换为灰度图
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-# 应用阈值处理，将非白色区域设置为黑色
-_, threshold = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
+# 自适应阈值处理，提取魔方面的区域
+threshold = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 11, 4)
 
 # 查找轮廓
 contours, _ = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -41,23 +41,23 @@ grid_colors = []
 
 for row in range(3):
     for col in range(3):
-        # 计算每个格子的区域
-        top = row * grid_size
-        bottom = (row + 1) * grid_size
-        left = col * grid_size
-        right = (col + 1) * grid_size
+        # 计算每个格子的中心点坐标
+        center_x = int((col + 0.5) * grid_size)
+        center_y = int((row + 0.5) * grid_size)
 
-        # 提取格子的颜色
-        grid_color = cropped_image[top:bottom, left:right, :]
+        # 提取中心点的颜色
+        center_color = cropped_image[center_y, center_x, :]
 
-        # 计算颜色的平均值
-        avg_color = np.mean(np.mean(grid_color, axis=0), axis=0)
+        # 打印中心点的颜色
+        print(f"Grid ({row+1}, {col+1}) - Center Color: {center_color}")
 
-        # 根据颜色的平均值匹配最接近的颜色
-        nearest_color = min(cube_colors, key=lambda x: np.linalg.norm(avg_color - cube_colors[x]))
+        # 根据颜色匹配最接近的颜色
+        nearest_color = min(cube_colors, key=lambda x: np.linalg.norm(center_color - cube_colors[x]))
 
         # 绘制方框和文本
-        cv2.rectangle(image, (left+x, top+y), (right+x, bottom+y), cube_colors[nearest_color], 2)
+        cv2.rectangle(image, (x + center_x - grid_size // 2, y + center_y - grid_size // 2),
+                      (x + center_x + grid_size // 2, y + center_y + grid_size // 2),
+                      cube_colors[nearest_color], 2)
 
         # 设置文本参数
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -66,20 +66,13 @@ for row in range(3):
         text_size, _ = cv2.getTextSize(nearest_color, font, font_scale, font_thickness)
 
         # 计算文本位置
-        text_x = int(left + x + (right - left) / 2 - text_size[0] / 2)
-        text_y = int(top + y + (bottom - top) / 2 + text_size[1] / 2)
+        text_x = int(x + center_x - text_size[0] / 2)
+        text_y = int(y + center_y + text_size[1] / 2)
 
         # 绘制文本
         cv2.putText(image, nearest_color, (text_x, text_y), font, font_scale, (0, 0, 0), font_thickness)
 
-        # 将颜色添加到列表中
-        grid_colors.append(nearest_color)
-
-# 将图片展示出来
-cv2.imshow('Rubik\'s Cube', image)
+# 展示结果图片
+cv2.imshow('Rubik\'s Cube Extraction', image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-
-# 打印输出每个格子提取的颜色值
-for i, color in enumerate(grid_colors):
-    print(f"Grid {i+1}: {color}")

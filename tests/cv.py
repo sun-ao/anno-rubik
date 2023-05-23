@@ -12,7 +12,7 @@ cube_colors = {
 }
 
 # 加载图片
-image = cv2.imread('your_image.jpg')
+image = cv2.imread('your_image_camera.jpg')
 
 # 划分图片为9个格子
 rows, cols, _ = image.shape

@@ -1,0 +1,13 @@
+POST http://127.0.0.1:5000/process_images
+Content-Type: application/json;charset=utf-8
+
+{
+  "image_urls": [
+    "https://demo.sunao.cc/cube/white_face.jpg",
+    "https://demo.sunao.cc/cube/blue_face.jpg",
+    "https://demo.sunao.cc/cube/red_face.jpg",
+    "https://demo.sunao.cc/cube/green_face.jpg",
+    "https://demo.sunao.cc/cube/yellow_face.jpg",
+    "https://demo.sunao.cc/cube/orange_face.jpg"
+  ]
+}

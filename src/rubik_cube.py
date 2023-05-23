@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import json
+import requests
 
 # 魔方的颜色对应的BGR值
 cube_colors = {
@@ -11,22 +13,27 @@ cube_colors = {
     'red': (0, 0, 255)
 }
 
-# 待处理的图片文件名列表
-image_files = [
-    './data/input/demo/blue_face.jpg',
-    './data/input/demo/green_face.jpg',
-    './data/input/demo/orange_face.jpg',
-    './data/input/demo/red_face.jpg',
-    './data/input/demo/white_face.jpg',
-    './data/input/demo/yellow_face.jpg'
+# 待处理的图片链接列表
+image_urls = [
+    'https://demo.sunao.cc/cube/blue_face.jpg',
+    'https://demo.sunao.cc/cube/green_face.jpg',
+    'https://demo.sunao.cc/cube/orange_face.jpg',
+    'https://demo.sunao.cc/cube/red_face.jpg',
+    'https://demo.sunao.cc/cube/white_face.jpg',
+    'https://demo.sunao.cc/cube/yellow_face.jpg'
 ]
 
-# 存储排序后的图片文件名列表
-sorted_image_files = []
+# 存储排序后的图片链接列表和格子数据
+sorted_images = []
 
-for file in image_files:
-    # 加载图片
-    image = cv2.imread(file)
+# 存储每个面的颜色数据
+faces_data = []
+
+for url in image_urls:
+    # 下载图片
+    response = requests.get(url)
+    image_array = np.asarray(bytearray(response.content), dtype=np.uint8)
+    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
 
     # 转换为灰度图像
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -73,8 +80,20 @@ for file in image_files:
             # 存储颜色和位置
             grid_data.append((nearest_color, (left, top, right, bottom)))
 
-    # 保存排序后的图片文件名和格子数据
-    sorted_image_files.append((file, grid_data, max_contour))
+    # 保存排序后的图片链接和格子数据
+    sorted_images.append((url, grid_data, cropped_image))
+
+    # 存储每个面的颜色数据
+    face_data = {'image': url, 'grids': []}
+
+    for i, (color, _) in enumerate(grid_data):
+        face_data['grids'].append({'grid': i+1, 'color': color})
+
+    faces_data.append(face_data)
+
+# 将每个面的颜色数据写入 JSON 文件
+with open('faces_data.json', 'w') as json_file:
+    json.dump(faces_data, json_file)
 
 # 根据中间格子的颜色顺序，展示裁剪、标记颜色后的图片
 display_order = ['white', 'blue', 'red', 'green', 'yellow', 'orange']
@@ -82,27 +101,18 @@ display_order = ['white', 'blue', 'red', 'green', 'yellow', 'orange']
 # 创建展示窗口
 cv2.namedWindow('Cropped and Marked Images', cv2.WINDOW_NORMAL)
 
-# 根据中间格子的颜色顺序，遍历排序后的图片文件和格子数据，展示图片
+# 根据中间格子的颜色顺序，遍历排序后的图片链接和格子数据，展示图片
 for color in display_order:
-    for file, grid_data, max_contour in sorted_image_files:
+    for url, grid_data, cropped_image in sorted_images:
         # 查找中间格子的颜色
         middle_color = grid_data[4][0]
 
         # 如果中间格子的颜色与当前遍历的颜色一致，则显示该图片
         if middle_color == color:
-            # 加载图片
-            marked_image = cv2.imread(file)
-
-            # 计算最大轮廓的边界框
-            x, y, w, h = cv2.boundingRect(max_contour)
-
-            # 创建一张与图片大小相同的空白图像
-            # marked_image = np.zeros_like(image)
-
             # 遍历格子数据，绘制方框和文本
             for grid_color, (left, top, right, bottom) in grid_data:
                 # 绘制方框
-                cv2.rectangle(marked_image, (left+x, top+y), (right+x, bottom+y), cube_colors[grid_color], 2)
+                cv2.rectangle(cropped_image, (left, top), (right, bottom), cube_colors[grid_color], 2)
 
                 # 设置文本参数
                 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -111,14 +121,14 @@ for color in display_order:
                 text_size, _ = cv2.getTextSize(grid_color, font, font_scale, font_thickness)
 
                 # 计算文本位置
-                text_x = int(left + x + (right - left) / 2 - text_size[0] / 2)
-                text_y = int(top + y + (bottom - top) / 2 + text_size[1] / 2)
+                text_x = int(left + (right - left) / 2 - text_size[0] / 2)
+                text_y = int(top + (bottom - top) / 2 + text_size[1] / 2)
 
                 # 绘制文本
-                cv2.putText(marked_image, grid_color, (text_x, text_y), font, font_scale, (0, 0, 0), font_thickness)
+                cv2.putText(cropped_image, grid_color, (text_x, text_y), font, font_scale, (0, 0, 0), font_thickness)
 
             # 显示图片
-            cv2.imshow('Cropped and Marked Images', marked_image)
+            cv2.imshow('Cropped and Marked Images', cropped_image)
             cv2.waitKey(0)
 
 # 关闭窗口
