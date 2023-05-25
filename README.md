@@ -62,9 +62,9 @@ pipenv run python src/app.py
 
 ## Docker  
 
-`问题`: ImportError: libGL.so.1: cannot open shared object file: No such file or directory
-`原因`：python镜像没有GUI环境（ cv2.imshow() 依赖）
-`解决`：apt-get update && apt-get install -y libgl1-mesa-dev  或者  opencv-python → opencv-python-headless 
+`问题`: ImportError: libGL.so.1: cannot open shared object file: No such file or directory  
+`原因`：python镜像没有GUI环境（ cv2.imshow() 依赖）  
+`解决`：apt-get update && apt-get install -y libgl1-mesa-dev  或者  opencv-python → opencv-python-headless   
 
 ```
 docker build -t anno-rubik:latest .
