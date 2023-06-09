@@ -1,11 +1,19 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import cv2
 import numpy as np
 import requests
-import json
 import concurrent.futures
+import kociemba
 
+# 创建 Flask 应用
 app = Flask(__name__)
+
+# 初始化 CORS 扩展
+CORS(app)
+
+# 设置上传文件存储路径
+upload_folder = 'uploads'
 
 # 魔方的颜色对应的BGR值
 cube_colors = {
@@ -152,6 +160,50 @@ def process_images():
         results = [{'image_url': r['image_url'], 'grid_colors': r['grid_colors']} for r in results]
 
         return jsonify(results)
+    except Exception as e:
+        error_message = str(e)
+        return jsonify({'error': error_message}), 500
+
+@app.route('/process_upload', methods=['POST'])
+def upload_file():
+    try:
+        # 获取上传的文件
+        file = request.files['file']
+
+        # 将文件读取为字节流
+        file_bytes = file.read()
+
+        # 将字节流转换为 numpy 数组
+        np_array = np.frombuffer(file_bytes, np.uint8)
+
+        # 解码图像
+        image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+        image = preprocess_image(image)
+
+        # 处理图像并提取颜色信息
+        processed_image, grid_colors = extract_cube_colors(image)
+
+        # 根据需要对颜色信息进行处理，比如保存到数据库、返回给前端等
+
+        # 返回处理结果
+        result = {
+            'colors':  [item["nearest_color"] for item in grid_colors]
+        }
+        return jsonify(result)
+    except Exception as e:
+        error_message = str(e)
+        return jsonify({'error': error_message}), 500
+    
+@app.route('/solve_cube', methods=['POST'])
+def solve_cube():
+    try:
+        data = request.get_json()
+        cube_state = data['cube_state']
+
+        # 使用 Kociemba 求解魔方
+        solution = kociemba.solve(cube_state)
+
+        return jsonify({'solution': solution})
     except Exception as e:
         error_message = str(e)
         return jsonify({'error': error_message}), 500

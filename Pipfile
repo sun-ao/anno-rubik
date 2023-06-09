@@ -8,6 +8,8 @@ numpy = "*"
 flask = "*"
 requests = "*"
 opencv-python = "*"
+flask-cors = "*"
+kociemba = "*"
 
 [dev-packages]
 
