@@ -1,9 +1,12 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, request, jsonify
 import cv2
 import numpy as np
 import requests
 import concurrent.futures
 import kociemba
+from qcloud_cos import CosConfig, CosS3Client
+from datetime import datetime
+import uuid
 
 cube_bp = Blueprint('cube', __name__)
 
@@ -161,9 +164,31 @@ def upload_file():
     try:
         # 获取上传的文件
         file = request.files['file']
-
         # 将文件读取为字节流
         file_bytes = file.read()
+        # 备份文件至COS
+        try:
+            # 获取 COS 配置信息
+            cos_region = current_app.config['COS_REGION']
+            cos_secret_id = current_app.config['COS_SECRET_ID']
+            cos_secret_key = current_app.config['COS_SECRET_KEY']
+            cos_bucket_name = current_app.config['COS_BUCKET_NAME']
+
+            # 初始化 COS 配置
+            cos_config = CosConfig(Region=cos_region, SecretId=cos_secret_id, SecretKey=cos_secret_key)
+            cos_client = CosS3Client(cos_config)
+
+            if file:
+                # 将文件上传至腾讯云 COS
+                response = cos_client.put_object(
+                    Bucket=cos_bucket_name,
+                    Body=file_bytes,
+                    Key=(datetime.now().strftime("%Y%m%d") + "/" + str(uuid.uuid4()) + "-" + file.filename)
+                )
+                # 返回上传结果
+                print(response)
+        except Exception as e:
+            print(e)
 
         # 将字节流转换为 numpy 数组
         np_array = np.frombuffer(file_bytes, np.uint8)

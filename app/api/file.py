@@ -25,7 +25,7 @@ def upload_file():
             response = cos_client.put_object(
                 Bucket=cos_bucket_name,
                 Body=file.read(),
-                Key=("/" + datetime.now().strftime("%Y%m%d%H%M%S") + "/" + file.filename)
+                Key=(datetime.now().strftime("%Y%m%d%H%M%S") + "/" + file.filename)
             )
             # 返回上传结果
             return jsonify({'message': 'File uploaded successfully.', 'data': str(response)}) 
