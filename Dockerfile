@@ -10,11 +10,11 @@ COPY Pipfile Pipfile.lock /app/
 # 安装依赖包（方案一）
 RUN apt-get update && \
     apt-get install -y libgl1-mesa-dev && \
-    pip install pipenv && \
+    pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pipenv && \
     pipenv install --system --deploy
 
 # 安装依赖包（方案二）
-# RUN pip install pipenv && \
+# RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pipenv && \
 #     pipenv install --system --deploy && \
 #     pipenv uninstall opencv-python && \
 #     pipenv install opencv-python-headless
@@ -26,7 +26,7 @@ COPY . /app
 EXPOSE 5000
 
 # 运行应用程序（方案一）
-CMD ["python", "src/app.py"]
+CMD ["python", "run.py"]
 
 # 运行应用程序（方案二）
-# CMD ["pipenv", "run", "python", "src/app.py"]
+# CMD ["pipenv", "run", "python", "run.py"]

@@ -52,12 +52,14 @@ pipenv run python cube.py
 
 ## 接口服务
 
+重命名 `app` 目录下配置文件 `config_example.py` 为 `config.py` 并补充合适的配置  
+
 切换到根目录
 
 ```
-pipenv run python src/app.py
+pipenv run python run.py
 
-// 接口请求示例 anno-rubik/http/process_images.http
+// 接口请求示例 anno-rubik/http/solve_cube.http
 ```
 
 ## Docker  
