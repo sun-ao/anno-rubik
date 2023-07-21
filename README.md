@@ -71,4 +71,10 @@ pipenv run python run.py
 ```
 docker build -t anno-rubik:latest .
 docker run -d -p 5000:5000 anno-rubik:latest
+
+# 上传镜像到阿里云
+$ docker login --username=******@foxmail.com registry.cn-hangzhou.aliyuncs.com
+$ docker images
+$ docker tag [ImageId] registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
+$ docker push registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
 ```

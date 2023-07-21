@@ -3,22 +3,22 @@ import numpy as np
 import json
 
 # 魔方的颜色对应的BGR（蓝色、绿色、红色）值
-# cube_colors = {
-#     'white': (255, 255, 255),
-#     'yellow': (0, 255, 255),
-#     'green': (0, 255, 0),
-#     'blue': (255, 0, 0),
-#     'orange': (0, 165, 255),
-#     'red': (0, 0, 255)
-# }
+brg_cube_colors = {
+    'white': (255, 255, 255),
+    'yellow': (0, 255, 255),
+    'green': (0, 255, 0),
+    'blue': (255, 0, 0),
+    'orange': (0, 165, 255),
+    'red': (0, 0, 255)
+}
 
 # 魔方的颜色对应的HSV（色相、饱和度、明度）值
-cube_colors = {
+hsv_cube_colors = {
     'white': (0, 0, 255), 
     'yellow': (30, 255, 255),  
     'green': (60, 255, 255),  
     'blue': (120, 255, 255),  
-    'orange': (15, 255, 255),  
+    'orange': (10, 255, 255),  
     'red': (0, 255, 255)
 }
 
@@ -27,6 +27,18 @@ def show_image(image, title):
     cv2.imshow(title, image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+# BGR值转换逻辑 （注意非RGB）
+def rgb_to_hex(rgb):
+    b, g, r = rgb
+    hex_code = '#{0:02x}{1:02x}{2:02x}'.format(r, g, b)
+    return hex_code
+
+# HSV颜色值转换为十六进制颜色代码
+def hsv_to_hex(hsv):
+    hsv_np = np.array([[hsv]], dtype=np.uint8)
+    bgr_np = cv2.cvtColor(hsv_np, cv2.COLOR_HSV2BGR)
+    return rgb_to_hex(bgr_np[0][0])
 
 # 等比例缩放图片，最大高度不超过500
 def preprocess_image(image):
@@ -86,7 +98,7 @@ def color_distance(color1, color2):
 
 def find_nearest_color(center_color):
     distances = {}
-    for key, value in cube_colors.items():
+    for key, value in hsv_cube_colors.items():
         distance = color_distance(center_color, value)
         print(f"Distance between {center_color} and {key}: {distance}")
         #  if distance < 2000: 设定一个适当的阈值，需要根据实际情况调整
@@ -146,20 +158,20 @@ def extract_cube_colors(image):
 
             # （1）RGB颜色识别，RGB对光线变化很敏感。注意配置 cube_colors 为 BGR 取值
             # center_color = np.mean(patch_image, axis=(0,1))
-            # nearest_color = min(cube_colors, key=lambda x: np.linalg.norm(center_color - cube_colors[x]))
+            # 将center_color转换为CSS可以使用的颜色编码
+            # center_color_code = rgb_to_hex(center_color)
+            # nearest_color = min(brg_cube_colors, key=lambda x: np.linalg.norm(center_color - brg_cube_colors[x]))
             
             # （2）HSV颜色识别，在提取颜色之前，将图像转换为HSV颜色空间。色调（Hue）通常更适合颜色识别，因为它对光线变化不太敏感。注意配置 cube_colors 为 HSV 取值
             hsv_image = cv2.cvtColor(patch_image, cv2.COLOR_BGR2HSV)
             # show_image(hsv_image, 'hsv_image')
             center_color = np.mean(hsv_image, axis=(0,1))
+            center_color_code = hsv_to_hex(center_color)
             nearest_color = find_nearest_color(center_color)
 
             # 打印中心点的颜色
             print(f"Grid ({row+1}, {col+1}) - Center Color: {center_color}")
             print(f"Grid ({row+1}, {col+1}) - Nearest Color: {nearest_color}")
-
-            # 将center_color转换为CSS可以使用的颜色编码
-            center_color_code = '#{:02x}{:02x}{:02x}'.format(int(center_color[2]), int(center_color[1]), int(center_color[0]))
 
             # 将中心点的颜色和最接近的颜色存储到grid_colors列表中
             grid_colors.append({
@@ -175,7 +187,7 @@ def extract_cube_colors(image):
             box_height = grid_size
 
             # 绘制方框
-            cv2.rectangle(image, (box_x, box_y), (box_x + box_width, box_y + box_height), cube_colors[nearest_color], 2)
+            cv2.rectangle(image, (box_x, box_y), (box_x + box_width, box_y + box_height), brg_cube_colors[nearest_color], 2)
 
             # 自适应字号
             font_scale = min(grid_size / 100, 1)
