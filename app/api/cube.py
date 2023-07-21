@@ -10,22 +10,23 @@ import uuid
 
 cube_bp = Blueprint('cube', __name__)
 
-# 魔方的颜色对应的BGR值
+# 魔方的颜色对应的HSV（色相、饱和度、明度）值
 cube_colors = {
-    'white': (255, 255, 255),
-    'blue': (255, 0, 0),
-    'orange': (0, 165, 255),
-    'green': (0, 255, 0),
-    'yellow': (0, 255, 255),
-    'red': (0, 0, 255)
+    'white': (0, 0, 255), 
+    'yellow': (30, 255, 255),  
+    'green': (60, 255, 255),  
+    'blue': (120, 255, 255),  
+    'orange': (15, 255, 255),  
+    'red': (0, 255, 255)
 }
 
-# BGR值转换逻辑 （注意非RGB）
-def rgb_to_hex(rgb):
-    b, g, r = rgb
+# HSV颜色值转换为十六进制颜色代码
+def hsv_to_hex(hsv):
+    hsv_np = np.array([[hsv]], dtype=np.uint8)
+    bgr_np = cv2.cvtColor(hsv_np, cv2.COLOR_HSV2BGR)
+    b, g, r = bgr_np[0][0]
     hex_code = '#{0:02x}{1:02x}{2:02x}'.format(r, g, b)
     return hex_code
-
 
 def preprocess_image(image):
     # 等比例缩放图片，最大高度不超过500
@@ -35,6 +36,25 @@ def preprocess_image(image):
         scale_factor = max_height / height
         image = cv2.resize(image, (int(width * scale_factor), int(height * scale_factor)))
     return image
+
+def color_distance(color1, color2):
+    # HSV色调通道是循环的，对于红色需要特别处理
+    d_hue = min(abs(color1[0] - color2[0]), 180 - abs(color1[0] - color2[0]))
+    d_sat = color1[1] - color2[1]
+    d_val = color1[2] - color2[2]
+
+    # 这里可以根据需要加权三个通道的距离，例如，对于色调通道加大权重
+    distance = np.sqrt(d_hue**2 + d_sat**2 + d_val**2)
+    return distance
+
+def find_nearest_color(center_color):
+    distances = {}
+    for key, value in cube_colors.items():
+        distance = color_distance(center_color, value)
+        distances[key] = distance
+
+    # 返回距离最小的颜色
+    return min(distances, key=distances.get)
 
 def extract_cube_colors(image):
     # 将图片转换为灰度图
@@ -74,21 +94,22 @@ def extract_cube_colors(image):
             center_x = int((col + 0.5) * grid_size)
             center_y = int((row + 0.5) * grid_size)
 
-            # 提取中心点的颜色
-            center_color = cropped_image[center_y, center_x, :]
+            # 提取区域的颜色平均值
+            patch_size = 20
+            patch_image = cropped_image[center_y - patch_size//2:center_y + patch_size//2, center_x - patch_size//2:center_x + patch_size//2, :]
+            hsv_image = cv2.cvtColor(patch_image, cv2.COLOR_BGR2HSV)
+            center_color = np.mean(hsv_image, axis=(0,1))
+            nearest_color = find_nearest_color(center_color)
 
             # 将center_color转换为CSS可以使用的颜色编码
-            center_color_code = rgb_to_hex((center_color[0], center_color[1], center_color[2]))
-
-            # 根据颜色匹配最接近的颜色
-            nearest_color = min(cube_colors, key=lambda x: np.linalg.norm(center_color - cube_colors[x]))
+            center_color_code = hsv_to_hex((center_color[0], center_color[1], center_color[2]))
 
             # 将中心点的颜色和最接近的颜色存储到grid_colors列表中
             grid_colors.append({
                 'center_color': center_color.tolist(),
                 'center_color_code': center_color_code,
                 'nearest_color': nearest_color,
-                'nearest_color_code': rgb_to_hex(cube_colors[nearest_color])
+                'nearest_color_code': hsv_to_hex(cube_colors[nearest_color])
             })
 
             # 绘制方框

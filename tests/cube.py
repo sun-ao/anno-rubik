@@ -1,20 +1,35 @@
 import cv2
 import numpy as np
 import json
-import requests
 
-# 魔方的颜色对应的BGR值
+# 魔方的颜色对应的BGR（蓝色、绿色、红色）值
+# cube_colors = {
+#     'white': (255, 255, 255),
+#     'yellow': (0, 255, 255),
+#     'green': (0, 255, 0),
+#     'blue': (255, 0, 0),
+#     'orange': (0, 165, 255),
+#     'red': (0, 0, 255)
+# }
+
+# 魔方的颜色对应的HSV（色相、饱和度、明度）值
 cube_colors = {
-    'white': (255, 255, 255),
-    'blue': (255, 0, 0),
-    'orange': (0, 165, 255),
-    'green': (0, 255, 0),
-    'yellow': (0, 255, 255),
-    'red': (0, 0, 255)
+    'white': (0, 0, 255), 
+    'yellow': (30, 255, 255),  
+    'green': (60, 255, 255),  
+    'blue': (120, 255, 255),  
+    'orange': (15, 255, 255),  
+    'red': (0, 255, 255)
 }
 
+# 调试 展示图片
+def show_image(image, title):
+    cv2.imshow(title, image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+# 等比例缩放图片，最大高度不超过500
 def preprocess_image(image):
-    # 等比例缩放图片，最大高度不超过500
     max_height = 500
     height, width = image.shape[:2]
     if height > max_height:
@@ -22,30 +37,92 @@ def preprocess_image(image):
         image = cv2.resize(image, (int(width * scale_factor), int(height * scale_factor)))
     return image
 
+# 旋转、倾斜的魔方，可以考虑使用透视变换
+def warp_perspective(image, contour):
+    # 获取轮廓的四个角点
+    rect = cv2.minAreaRect(contour)
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+
+    # 对角点进行排序（左上，右上，右下，左下）
+    box_sorted = np.zeros_like(box)
+    sum_pts = box.sum(axis=1)
+    box_sorted[0] = box[np.argmin(sum_pts)]
+    box_sorted[2] = box[np.argmax(sum_pts)]
+
+    diff_pts = np.diff(box, axis=1)
+    box_sorted[1] = box[np.argmin(diff_pts)]
+    box_sorted[3] = box[np.argmax(diff_pts)]
+
+    # 定义魔方的正方形面的目标点
+    side_length = max([np.linalg.norm(box_sorted[0] - box_sorted[1]),
+                       np.linalg.norm(box_sorted[1] - box_sorted[2]),
+                       np.linalg.norm(box_sorted[2] - box_sorted[3]),
+                       np.linalg.norm(box_sorted[3] - box_sorted[0])])
+    
+    dst_pts = np.array([[0, 0],
+                        [side_length - 1, 0],
+                        [side_length - 1, side_length - 1],
+                        [0, side_length - 1]], dtype='float32')
+
+    # 计算透视变换矩阵
+    M = cv2.getPerspectiveTransform(np.float32(box_sorted), dst_pts)
+
+    # 执行透视变换
+    warped = cv2.warpPerspective(image, M, (int(side_length), int(side_length)))
+
+    return warped
+
+
+def color_distance(color1, color2):
+    # HSV色调通道是循环的，对于红色需要特别处理
+    d_hue = min(abs(color1[0] - color2[0]), 180 - abs(color1[0] - color2[0]))
+    d_sat = color1[1] - color2[1]
+    d_val = color1[2] - color2[2]
+
+    # 这里可以根据需要加权三个通道的距离，例如，对于色调通道加大权重
+    distance = np.sqrt(d_hue**2 + d_sat**2 + d_val**2)
+    return distance
+
+def find_nearest_color(center_color):
+    distances = {}
+    for key, value in cube_colors.items():
+        distance = color_distance(center_color, value)
+        print(f"Distance between {center_color} and {key}: {distance}")
+        #  if distance < 2000: 设定一个适当的阈值，需要根据实际情况调整
+        distances[key] = distance
+
+    if not distances:  # 如果所有颜色的距离都超过了阈值
+        return None
+
+    # 返回距离最小的颜色
+    return min(distances, key=distances.get)
+
 def extract_cube_colors(image):
+    show_image(image, 'image')
+
     # 将图片转换为灰度图
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    show_image(gray, 'gray')
 
     # 应用高斯模糊
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
-
     # 边缘增强
     edges = cv2.Canny(blur, 50, 150)
-
     # 膨胀操作
     dilated = cv2.dilate(edges, None, iterations=2)
-
     # 查找轮廓
     contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
     # 确定最大轮廓
     max_contour = max(contours, key=cv2.contourArea)
-
     # 计算最大轮廓的边界框
     x, y, w, h = cv2.boundingRect(max_contour)
 
     # 裁剪图片，只保留魔方的这个面
     cropped_image = image[y:y+h, x:x+w]
+    # 针对旋转，倾斜的魔方，可以考虑使用透视变换（效果不太好）
+    # cropped_image = warp_perspective(image, max_contour)
+    show_image(cropped_image, 'cropped_image')
 
     # 划分裁剪后的图片为9个格子
     rows, cols, _ = cropped_image.shape
@@ -61,16 +138,28 @@ def extract_cube_colors(image):
             center_y = int((row + 0.5) * grid_size)
 
             # 提取中心点的颜色
-            center_color = cropped_image[center_y, center_x, :]
+            # center_color = cropped_image[center_y, center_x, :]
+            # 提取区域的颜色平均值
+            patch_size = 20
+            patch_image = cropped_image[center_y - patch_size//2:center_y + patch_size//2, center_x - patch_size//2:center_x + patch_size//2, :]
+            # show_image(patch_image, 'patch_image')
+
+            # （1）RGB颜色识别，RGB对光线变化很敏感。注意配置 cube_colors 为 BGR 取值
+            # center_color = np.mean(patch_image, axis=(0,1))
+            # nearest_color = min(cube_colors, key=lambda x: np.linalg.norm(center_color - cube_colors[x]))
+            
+            # （2）HSV颜色识别，在提取颜色之前，将图像转换为HSV颜色空间。色调（Hue）通常更适合颜色识别，因为它对光线变化不太敏感。注意配置 cube_colors 为 HSV 取值
+            hsv_image = cv2.cvtColor(patch_image, cv2.COLOR_BGR2HSV)
+            # show_image(hsv_image, 'hsv_image')
+            center_color = np.mean(hsv_image, axis=(0,1))
+            nearest_color = find_nearest_color(center_color)
 
             # 打印中心点的颜色
             print(f"Grid ({row+1}, {col+1}) - Center Color: {center_color}")
-
-            # 根据颜色匹配最接近的颜色
-            nearest_color = min(cube_colors, key=lambda x: np.linalg.norm(center_color - cube_colors[x]))
+            print(f"Grid ({row+1}, {col+1}) - Nearest Color: {nearest_color}")
 
             # 将center_color转换为CSS可以使用的颜色编码
-            center_color_code = '#{:02x}{:02x}{:02x}'.format(center_color[2], center_color[1], center_color[0])
+            center_color_code = '#{:02x}{:02x}{:02x}'.format(int(center_color[2]), int(center_color[1]), int(center_color[0]))
 
             # 将中心点的颜色和最接近的颜色存储到grid_colors列表中
             grid_colors.append({
@@ -112,6 +201,7 @@ def main():
     # image = cv2.imread('rubiks_cube_face.jpg')
     # image = cv2.imread('rubiks_cube_web.jpg')
     # image = cv2.imread('rubiks_cube_camera.jpg')
+    # image = cv2.imread('rubiks_cube_colors.jpg')
 
     # 加载图片 - 线上图片
     # image_url = 'https://demo.sunao.cc/cube/white_face.jpg'
@@ -125,9 +215,7 @@ def main():
     extracted_image, grid_colors = extract_cube_colors(image)
 
     # 展示结果图片
-    cv2.imshow('Rubik\'s Cube Extraction', extracted_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    show_image(extracted_image, 'Rubik\'s Cube')
 
     # 将grid_colors以JSON格式输出
     print(json.dumps(grid_colors, indent=4))
