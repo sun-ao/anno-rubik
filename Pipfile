@@ -11,6 +11,8 @@ opencv-python = "*"
 flask-cors = "*"
 kociemba = "*"
 cos-python-sdk-v5 = "*"
+mysql-connector-python = "*"
+cryptography = "*"
 
 [dev-packages]
 

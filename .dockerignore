@@ -5,3 +5,5 @@ http/
 
 # 忽略 tests 目录
 tests/
+
+**/config.py

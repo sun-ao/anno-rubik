@@ -1,0 +1,11 @@
+### cache first
+GET http://127.0.0.1:5000/proxy?_url=https://github.com/
+
+### no cache
+GET http://127.0.0.1:5000/proxy?_url=https://github.com/&_nocache=1
+
+### encodeURIComponent
+GET http://127.0.0.1:5000/proxy?_url=https%3A%2F%2Fgithub.com
+
+### encrypt
+GET http://127.0.0.1:5000/proxy?_url=gAAAAABlJQ7IQMgucEk60fcSGdzRMO6BAJuSk7fhSRO0Vb7d31NeWdTurRc0VU6RePHxfoQqY2KhYd-P7bEePtphmbmsGGJc8TLGFk2AcdOfYmy3gywkB6M=
