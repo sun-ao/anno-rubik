@@ -77,4 +77,13 @@ $ docker login --username=******@foxmail.com registry.cn-hangzhou.aliyuncs.com
 $ docker images
 $ docker tag [ImageId] registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
 $ docker push registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
+
+# 部署
+$ docker ps -a
+$ docker stop anno-rubik
+$ docker rm anno-rubik
+$ docker images
+$ docker pull registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
+$ docker run --name anno-rubik -d -p 5000:5000 -v "/[本地配置文件路径]/config.py:/app/app/config.py" registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
+$ docker logs anno-rubik
 ```
