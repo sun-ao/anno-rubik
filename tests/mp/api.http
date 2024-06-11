@@ -1,0 +1,89 @@
+### 每日一言
+GET https://api.oioweb.cn/api/common/yiyan
+
+### 每日一句英文
+GET https://api.oioweb.cn/api/common/OneDayEnglish
+
+### 每日一句中文
+GET https://v1.hitokoto.cn/
+
+### 获取 Access token
+GET https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=&secret=
+
+@ACCESS_TOKEN = 
+
+### 获取草稿列表
+POST https://api.weixin.qq.com/cgi-bin/draft/batchget?access_token={{ACCESS_TOKEN}}
+
+{
+    "offset": 0,
+    "count": 5,
+    "no_content": 0
+}
+
+### 获取草稿
+POST https://api.weixin.qq.com/cgi-bin/draft/get?access_token={{ACCESS_TOKEN}}
+
+{
+    "media_id": ""
+}
+
+### 新建草稿
+POST https://api.weixin.qq.com/cgi-bin/draft/add?access_token={{ACCESS_TOKEN}}
+
+{
+    "articles": [
+        {
+            "title": "",
+            "author": "",
+            "digest": "",
+            "content": "",
+            "content_source_url": "",
+            "thumb_media_id": "",
+            "need_open_comment": 1,
+            "only_fans_can_comment": 0
+        }
+    ]
+}
+
+### 新增永久素材
+POST https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=ACCESS_TOKEN
+# curl -F media=@test.jpg "https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=ACCESS_TOKEN
+
+
+### 获取永久素材
+POST https://api.weixin.qq.com/cgi-bin/material/get_material?access_token={{ACCESS_TOKEN}}
+
+{
+  "media_id": ""
+}
+
+### 获取素材列表
+POST https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={{ACCESS_TOKEN}}
+
+{
+    "type": "image",
+    "offset": 0,
+    "count": 5
+}
+
+### 询rid信息（问题定位）
+POST https://api.weixin.qq.com/cgi-bin/openapi/rid/get?access_token={{ACCESS_TOKEN}}
+
+{
+    "rid": ""
+}
+
+### 群发接口
+POST https://api.weixin.qq.com/cgi-bin/message/mass/sendall?access_token={{ACCESS_TOKEN}}
+
+{
+    "filter": {
+        "is_to_all": true
+    },
+    "mpnews": {
+        "media_id": ""
+    },
+    "msgtype": "mpnews",
+    "send_ignore_reprint": 0
+}

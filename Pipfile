@@ -13,6 +13,8 @@ kociemba = "*"
 cos-python-sdk-v5 = "*"
 mysql-connector-python = "*"
 cryptography = "*"
+pymupdf = "*"
+pillow = "*"
 
 [dev-packages]
 

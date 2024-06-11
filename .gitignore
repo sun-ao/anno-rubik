@@ -2,3 +2,5 @@
 config.py
 # 测试样本
 sample/
+
+test.http

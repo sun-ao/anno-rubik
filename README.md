@@ -84,6 +84,6 @@ $ docker stop anno-rubik
 $ docker rm anno-rubik
 $ docker images
 $ docker pull registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
-$ docker run --name anno-rubik -d -p 5000:5000 -v "/[本地配置文件路径]/config.py:/app/app/config.py" registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
+$ docker run --cpus=0.2 --memory=256m --name anno-rubik -d -p 5000:5000 -v "/[本地配置文件路径]/config.py:/app/app/config.py" registry.cn-hangzhou.aliyuncs.com/***/anno-rubik:[镜像版本号]
 $ docker logs anno-rubik
 ```

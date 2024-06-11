@@ -14,3 +14,7 @@ MYSQL_DB = 'your_database_name'
 # GET /generate_fernet_key
 # Example: FBPh6nRCFma_qfZ1j1o1JoFHtbsbvjF2QomfxJzjeaE=
 FERNET_KEY="your_fernet_key"
+
+# mp config
+MP_APPID="your_weixin_mp_appid"
+MP_SECRET="your_weixin_mp_secret"
