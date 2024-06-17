@@ -4,6 +4,7 @@ import requests
 import json
 from PIL import Image
 from io import BytesIO
+import time
 
 mp_bp = Blueprint('mp', __name__)
 
@@ -55,6 +56,13 @@ def submit_to_wechat(media_id, access_token):
     response = requests.post(url, headers=headers, data=json.dumps(data, ensure_ascii=False).encode('utf-8'))
     return response.json()
 
+# 是否包含中文
+def contains_chinese(s):
+    for c in s:
+        if '\u4e00' <= c <= '\u9fff':
+            return True
+    return False
+
 @mp_bp.route('/mp_auto', methods=['POST'])
 def auto_publish_mp():
     try:
@@ -66,6 +74,15 @@ def auto_publish_mp():
         data_author = title_response.json()['result']['author']
         image_url = title_response.json()['result']['pic_url']
         image_date = title_response.json()['result']['date']
+        today_date = time.strftime('%Y%m%d', time.localtime(time.time()))
+        # 判断时间不为当天
+        if image_date != today_date:
+            image_date = today_date
+            random_response = requests.get('https://v1.hitokoto.cn/')
+            data_title = random_response.json()['hitokoto']
+            data_from = random_response.json()['from']
+            data_author = random_response.json()['from_who']
+            image_url = "https://picsum.photos/1366/768?random"
         image_response = requests.get(image_url)
         original_img = Image.open(BytesIO(image_response.content))
         cropped_img = crop_to_aspect(original_img, 2.35 / 1)
@@ -90,7 +107,12 @@ def auto_publish_mp():
 
         chinese_response = requests.get('https://v1.hitokoto.cn/')
         data_chinese = chinese_response.json()['hitokoto']
-
+        while True:
+            if contains_chinese(data_chinese):
+                break
+            chinese_response = requests.get('https://v1.hitokoto.cn/')
+            data_chinese = chinese_response.json()['hitokoto']
+            
         data_content = f'''<p><span style="font-size: 14px;">标题来源：{data_from}（{data_author}）</span></p><p><span style="font-size: 14px;"><br  /></span></p><p><img class="rich_pages wxw-img" data-ratio="0.562037037037037" data-src="{data_image}" data-w="1080"></p><p><br  /></p><h2 style="text-align: center;"><span style="font-size: 18px;"><strong>每日一句英文</strong></span></h2><p><br  /></p><p>{data_english}</p><p>{data_english_note}</p><p><br  /></p><h2 style="text-align: center;"><span style="font-size: 18px;"><strong>每日一句中文</strong></span></h2><p><br  /></p><p>{data_chinese}</p><p><br  /></p><hr style="border-style: solid;border-width: 1px 0 0;border-color: rgba(0,0,0,0.1);-webkit-transform-origin: 0 0;-webkit-transform: scale(1, 0.5);transform-origin: 0 0;transform: scale(1, 0.5);"  /><p style="text-align: right;"><span style="font-size: 12px;">如有侵权，请联系我，我将及时删除或更正。</span></p>'''
 
         data = {
