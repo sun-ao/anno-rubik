@@ -87,3 +87,9 @@ POST https://api.weixin.qq.com/cgi-bin/message/mass/sendall?access_token={{ACCES
     "msgtype": "mpnews",
     "send_ignore_reprint": 0
 }
+
+### 获取英文
+GET https://api.quotable.io/random
+
+### 翻译英文
+GET https://api.mymemory.translated.net/get?q=If you don't know where you are going, any road will get you there.&langpair=en|zh

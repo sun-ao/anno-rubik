@@ -68,12 +68,17 @@ def auto_publish_mp():
     try:
         access_token = get_wechat_access_token(current_app.config['MP_APPID'], current_app.config['MP_SECRET'])
 
-        title_response = requests.get('https://api.oioweb.cn/api/common/yiyan')
-        data_title = title_response.json()['result']['content']
-        data_from = title_response.json()['result']['from']
-        data_author = title_response.json()['result']['author']
-        image_url = title_response.json()['result']['pic_url']
-        image_date = title_response.json()['result']['date']
+        try:
+            title_response = requests.get('https://api.oioweb.cn/api/common/yiyan', timeout=10)
+            data_title = title_response.json()['result']['content']
+            data_from = title_response.json()['result']['from']
+            data_author = title_response.json()['result']['author']
+            image_url = title_response.json()['result']['pic_url']
+            image_date = title_response.json()['result']['date']
+        except Exception as e:
+            # 在异常发生时返回空对象
+            data_title = data_from = data_author = image_url = image_date = None
+
         today_date = time.strftime('%Y%m%d', time.localtime(time.time()))
         # 判断时间不为当天
         if image_date != today_date:
@@ -101,9 +106,27 @@ def auto_publish_mp():
         data_thumb_media_id = cropped_upload_response['media_id']
         os.remove(cropped_temp_name)
 
-        english_response = requests.get('https://api.oioweb.cn/api/common/OneDayEnglish')
-        data_english = english_response.json()['result']['content']
-        data_english_note = english_response.json()['result']['note']
+        try:
+            english_response = requests.get('https://api.oioweb.cn/api/common/OneDayEnglish', timeout=10)
+            data_english = english_response.json()['result']['content']
+            data_english_note = english_response.json()['result']['note']
+        except Exception as e:
+            # 在异常发生时返回空对象
+            # 获取英文名言
+            quote_url = 'https://api.quotable.io/random'
+            quote_response = requests.get(quote_url)
+            quote_data = quote_response.json()
+            data_english = quote_data['content']
+
+            # 使用 LibreTranslate API 将英文名言翻译成中文
+            translate_url = 'https://api.mymemory.translated.net/get'
+            translate_params = {
+                'q': data_english,
+                'langpair': 'en|zh'
+            }
+            translate_response = requests.get(translate_url, params=translate_params)
+            translate_data = translate_response.json()
+            data_english_note = translate_data['responseData']['translatedText']
 
         chinese_response = requests.get('https://v1.hitokoto.cn/')
         data_chinese = chinese_response.json()['hitokoto']
