@@ -1,0 +1,8 @@
+POST http://127.0.0.1:5000/log?a=1&b=&c=3
+Content-Type: application/json;charset=utf-8
+
+{
+    "c": 2,
+    "d": "3",
+    "e": null
+}

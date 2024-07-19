@@ -15,6 +15,7 @@ mysql-connector-python = "*"
 cryptography = "*"
 pymupdf = "*"
 pillow = "*"
+qcloud-python-sts = "*"
 
 [dev-packages]
 
