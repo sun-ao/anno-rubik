@@ -51,6 +51,42 @@ def save_log(ip, content):
     ''', (ip, json.dumps(content)))
     mysql_connection.commit()
 
+# 创建黑名单配置表
+def create_blacklist_table():
+    mysql_connection = init_mysql_connection()
+    mysql_cursor = init_mysql_cursor(mysql_connection)
+
+    create_table_query = '''
+    CREATE TABLE IF NOT EXISTS device_blacklist (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        device_id VARCHAR(128) NOT NULL UNIQUE,
+        content JSON NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    '''
+    mysql_cursor.execute(create_table_query)
+    mysql_connection.commit()
+    mysql_cursor.close()
+    mysql_connection.close()
+
+# 查询黑名单配置
+def get_blacklist_by_device_id(device_id):
+    mysql_connection = init_mysql_connection()
+    mysql_cursor = init_mysql_cursor(mysql_connection)
+
+    mysql_cursor.execute('''
+        SELECT content FROM device_blacklist
+        WHERE device_id = %s
+    ''', (device_id,))
+
+    result = mysql_cursor.fetchone()
+    mysql_cursor.close()
+    mysql_connection.close()
+
+    if result:
+        return result[0]
+    return None
+
 def get_real_ip(request):
     # 尝试从X-Forwarded-For头部获取IP地址
     x_forwarded_for = request.headers.get('X-Forwarded-For')
@@ -70,13 +106,15 @@ def log_request():
     try:
         # 收集请求IP
         request_ip = get_real_ip(request)
+        # 获取设备ID（从请求头）
+        device_id = request.headers.get('X-Device-ID')
         # 初始化一个空字典来存储参数
         request_params = {}
-        
+
         # 提取查询参数
         query_params = request.args.to_dict()
         request_params.update(query_params)
-        
+
         # 对于POST和其他非GET请求，提取请求体中的参数
         if request.method != 'GET':
             if request.is_json:
@@ -88,8 +126,15 @@ def log_request():
                 body_params = request.form.to_dict()
                 request_params.update(body_params)
 
-        # return jsonify(request_params)
+        # 保存日志
         save_log(request_ip, request_params)
+
+        # 如果有设备ID，查询黑名单配置
+        if device_id:
+            blacklist_content = get_blacklist_by_device_id(device_id)
+            if blacklist_content:
+                # 返回黑名单配置内容
+                return jsonify(blacklist_content)
 
         return jsonify({'message': 'log successfully.'})
     except Exception as e:

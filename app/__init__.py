@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from app.api import api_bp
 from app.api.proxy import create_proxy_cache_table  # 导入初始化函数
-from app.api.log import create_track_log_table  # 导入初始化函数
+from app.api.log import create_track_log_table, create_blacklist_table  # 导入初始化函数
 
 def create_app():
     app = Flask(__name__)
@@ -15,6 +15,7 @@ def create_app():
     with app.app_context():
         create_proxy_cache_table()
         create_track_log_table()
+        create_blacklist_table()
 
     # 注册蓝图
     app.register_blueprint(api_bp)
