@@ -3,7 +3,7 @@
 ## MacOS
 
 ```
-python3 --version 
+python3 --version
 // Python 3.9.13
 
 pip3 --version
@@ -12,61 +12,55 @@ pip3 --version
 python3 -m pip install --upgrade pip
 // 升级pip 到最近版
 
-pip3 install pipenv  
-// 安装 pipenv
-
-pipenv install   
+pip3 install -r requirements.txt
 // 安装依赖
 
-cd tests 
+cd tests
 // 测试
 
-pipenv run python cube.py
+python3 cube.py
 // 调试运行
 ```
 
 ## Windows
 
 ```
-python --version 
-// Python 3.6.8
+python --version
+// Python 3.9+
 
 pip --version
-// pip 21.3.1 from c:\users\sun_ao\appdata\local\programs\python\python36\lib\site-packages\pip (python 3.6)
+// pip 21.3.1+
 
 python -m pip install --upgrade pip
 // 升级pip 到最近版
 
-pip install pipenv  
-// 安装 pipenv
-
-pipenv install   
+pip install -r requirements.txt
 // 安装依赖
 
-cd tests 
+cd tests
 // 测试
 
-pipenv run python cube.py
+python cube.py
 // 调试运行
 ```
 
 ## 接口服务
 
-重命名 `app` 目录下配置文件 `config_example.py` 为 `config.py` 并补充合适的配置  
+重命名 `app` 目录下配置文件 `config_example.py` 为 `config.py` 并补充合适的配置
 
 切换到根目录
 
 ```
-pipenv run python run.py
+python run.py
 
 // 接口请求示例 anno-rubik/http/solve_cube.http
 ```
 
-## Docker  
+## Docker
 
-`问题`: ImportError: libGL.so.1: cannot open shared object file: No such file or directory  
-`原因`：python镜像没有GUI环境（ cv2.imshow() 依赖）  
-`解决`：apt-get update && apt-get install -y libgl1-mesa-dev  或者  opencv-python → opencv-python-headless   
+`问题`: ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+`原因`：python镜像没有GUI环境（ cv2.imshow() 依赖）
+`解决`：apt-get update && apt-get install -y libgl1-mesa-dev  或者  opencv-python → opencv-python-headless
 
 ```
 docker build -t anno-rubik:latest .

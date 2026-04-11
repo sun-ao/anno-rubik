@@ -1,0 +1,12 @@
+numpy
+flask
+requests
+opencv-python-headless
+flask-cors
+kociemba
+cos-python-sdk-v5
+mysql-connector-python
+cryptography
+pymupdf
+pillow
+qcloud-python-sts

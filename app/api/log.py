@@ -133,8 +133,8 @@ def log_request():
         if device_id:
             blacklist_content = get_blacklist_by_device_id(device_id)
             if blacklist_content:
-                # 返回黑名单配置内容
-                return jsonify(blacklist_content)
+                # 返回黑名单配置内容（解析 JSON 字符串为对象）
+                return jsonify(json.loads(blacklist_content))
 
         return jsonify({'message': 'log successfully.'})
     except Exception as e:

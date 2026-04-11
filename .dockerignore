@@ -1,9 +1,43 @@
-# 注释以井号(#)开头
+# Git
+.git
+.gitignore
 
-# 忽略 http 目录
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Tests
+tests/
 http/
 
-# 忽略 tests 目录
-tests/
+# Python cache
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+.eggs
 
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Pipenv
+Pipfile
+Pipfile.lock
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Config (需要运行时挂载)
 **/config.py
+
+# Documentation
+README.md
+*.md
